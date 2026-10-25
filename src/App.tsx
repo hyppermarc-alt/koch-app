@@ -601,7 +601,14 @@ function Home(props: {
   const greet = hour < 11 ? 'Guten Morgen' : hour < 17 ? 'Hallo' : 'Guten Abend'
   const [showQuick, setShowQuick] = useState(false)
 
-  const list = RECIPES.map((r) => ({ r, n: recipeNutritionPerServing(r), locked: props.cookedCount < LEVEL_UNLOCK[r.level] }))
+  const [kitchen, setKitchen] = useState('Alle')
+  const kitchens = ['Alle', ...Array.from(new Set(RECIPES.map((r) => r.cuisine).filter((c): c is string => !!c)))]
+
+  const list = RECIPES.filter((r) => kitchen === 'Alle' || r.cuisine === kitchen).map((r) => ({
+    r,
+    n: recipeNutritionPerServing(r),
+    locked: props.cookedCount < LEVEL_UNLOCK[r.level],
+  }))
   const sorted = [...list].sort((a, b) => {
     if (a.locked !== b.locked) return a.locked ? 1 : -1
     const fa = a.n.kcal <= remaining ? 0 : 1
@@ -681,6 +688,23 @@ function Home(props: {
       )}
 
       <h2 className="section-title">Für dich ausgesucht</h2>
+      <div style={{ display: 'flex', gap: 8, overflowX: 'auto', paddingBottom: 6, marginBottom: 12 }}>
+        {kitchens.map((k) => (
+          <button
+            key={k}
+            className="chip"
+            onClick={() => setKitchen(k)}
+            aria-pressed={kitchen === k}
+            style={{
+              flex: 'none',
+              whiteSpace: 'nowrap',
+              ...(kitchen === k ? { background: 'var(--tomato)', borderColor: 'var(--tomato)', color: '#fff' } : {}),
+            }}
+          >
+            {k}
+          </button>
+        ))}
+      </div>
       <div className="cards">
         {sorted.map(({ r, n, locked }) => {
           const fits = n.kcal <= remaining
@@ -691,7 +715,7 @@ function Home(props: {
               <div className="card-body">
                 <div className="card-tags">
                   <span className="tag">Level {r.level}</span>
-                  <span className="tag">{r.meal}</span>
+                  {r.cuisine && kitchen === 'Alle' && <span className="tag">{r.cuisine}</span>}
                   {!locked && <span className={`tag ${fits ? 'ok' : 'warn'}`}>{fits ? '✓ passt rein' : 'heute etwas viel'}</span>}
                 </div>
                 <h3>{r.title}</h3>
