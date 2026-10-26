@@ -61,8 +61,12 @@ function usePersisted<T>(key: string, initial: T) {
 
 const uid = () => Math.random().toString(36).slice(2, 10)
 
-// Level-Freischaltung: so viele gekochte Gerichte braucht man pro Level
-const LEVEL_UNLOCK: Record<number, number> = { 1: 0, 2: 2, 3: 5 }
+// Alle Gerichte sind sofort frei (keine Level-Sperre)
+const LEVEL_UNLOCK: Record<number, number> = { 1: 0, 2: 0, 3: 0 }
+
+// Sparte für Vegetarier im Filter auf der Startseite
+const VEGGIE = '🌱 Vegetarisch'
+const isVeggie = (r: Recipe) => r.tags.includes('vegetarisch') || r.tags.includes('vegan')
 
 // ───────────── App ─────────────
 
@@ -602,9 +606,9 @@ function Home(props: {
   const [showQuick, setShowQuick] = useState(false)
 
   const [kitchen, setKitchen] = useState('Alle')
-  const kitchens = ['Alle', ...Array.from(new Set(RECIPES.map((r) => r.cuisine).filter((c): c is string => !!c)))]
+  const kitchens = ['Alle', VEGGIE, ...Array.from(new Set(RECIPES.map((r) => r.cuisine).filter((c): c is string => !!c)))]
 
-  const list = RECIPES.filter((r) => kitchen === 'Alle' || r.cuisine === kitchen).map((r) => ({
+  const list = RECIPES.filter((r) => kitchen === 'Alle' || (kitchen === VEGGIE ? isVeggie(r) : r.cuisine === kitchen)).map((r) => ({
     r,
     n: recipeNutritionPerServing(r),
     locked: props.cookedCount < LEVEL_UNLOCK[r.level],
